@@ -9,6 +9,7 @@ module Oxidized
     def connect node
       @node    = node
       @timeout = Oxidized.config.timeout
+      @waittime = Oxidized.config.waittime
       @node.model.cfg['telnet'].each { |cb| instance_exec(&cb) }
       port = vars(:telnet_port) || 23
 
@@ -54,7 +55,7 @@ module Oxidized
     private
 
     def expect re
-      @telnet.waitfor 'Match' => re, 'Timeout' => @timeout
+      @telnet.waitfor 'Match' => re, 'Timeout' => @timeout, 'Waittime' => @waittime
     end
 
     def disconnect
