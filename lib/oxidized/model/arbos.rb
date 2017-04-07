@@ -22,5 +22,6 @@ class ARBOS  < Oxidized::Model
 
   cfg :ssh do
     exec true
+    pre_logout 'exit'
   end
 end
