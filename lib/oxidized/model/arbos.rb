@@ -20,8 +20,12 @@ class ARBOS  < Oxidized::Model
     cfg
   end
 
+  cmd 'ip access show' do |cfg|
+    cfg
+  end
+
   cfg :ssh do
-    exec true
+    post_login 'system lines set 0'
     pre_logout 'exit'
   end
 end
