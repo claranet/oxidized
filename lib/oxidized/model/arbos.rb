@@ -21,7 +21,7 @@ class ARBOS  < Oxidized::Model
   end
 
   cmd 'ip access show' do |cfg|
-    cfg
+    comment cfg
   end
 
   cfg :ssh do
