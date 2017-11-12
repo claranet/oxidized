@@ -20,20 +20,22 @@ class IOS < Oxidized::Model
     #cfg.gsub! /\cH+\s{8}/, ''         # example how to handle pager
     #cfg.gsub! /\cH+/, ''              # example how to handle pager
     # get rid of errors for commands that don't work on some devices
+    raise RuntimeError, "Authorization failed" if cfg.match /(Authorization failed)/
     cfg.gsub! /^% Invalid input detected at '\^' marker\.$|^\s+\^$/, ''
     cfg.each_line.to_a[1..-2].join
   end
 
   cmd :secret do |cfg|
     cfg.gsub! /^(snmp-server community).*/, '\\1 <configuration removed>'
-    cfg.gsub! /username (\S+) privilege (\d+) (\S+).*/, '<secret hidden>'
-    cfg.gsub! /^username \S+ password \d \S+/, '<secret hidden>'
-    cfg.gsub! /^username \S+ secret \d \S+/, '<secret hidden>'
-    cfg.gsub! /^enable (password|secret) \d \S+/, '<secret hidden>'
+    cfg.gsub! /^(username \S+ privilege \d+) (\S+).*/, '\\1 <secret hidden>'
+    cfg.gsub! /^(username \S+ password \d) (\S+)/, '\\1 <secret hidden>'
+    cfg.gsub! /^(username \S+ secret \d) (\S+)/, '\\1 <secret hidden>'
+    cfg.gsub! /^(enable (password|secret) \d) (\S+)/, '\\1 <secret hidden>'
     cfg.gsub! /^(\s+(?:password|secret)) (?:\d )?\S+/, '\\1 <secret hidden>'
-    cfg.gsub! /wpa-psk ascii \d \S+/, '<secret hidden>'
-    cfg.gsub! /key 7 \d.+/, '<secret hidden>'
-    cfg.gsub! /^tacacs-server key \d \S+/, '<secret hidden>'
+    cfg.gsub! /^(.*wpa-psk ascii \d) (\S+)/, '\\1 <secret hidden>'
+    cfg.gsub! /^(.*key 7) (\d.+)/, '\\1 <secret hidden>'
+    cfg.gsub! /^(tacacs-server key \d) (\S+)/, '\\1 <secret hidden>'
+    cfg.gsub! /^(crypto isakmp key) (\S+) (.*)/, '\\1 <secret hidden> \\3'
     cfg
   end
 
@@ -133,8 +135,12 @@ class IOS < Oxidized::Model
     # preferred way to handle additional passwords
     if vars :enable
       post_login do
-        send "enable\n"
-        cmd vars(:enable)
+        line = cmd ''
+        enabled = true if line =~ /^(\n[\w.@()-]+#)$/
+        if not enabled
+          send "enable\n"
+          cmd vars(:enable)
+        end
       end
     end
     post_login 'terminal length 0'

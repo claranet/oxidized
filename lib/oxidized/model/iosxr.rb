@@ -6,7 +6,9 @@ class IOSXR < Oxidized::Model
   comment  '! '
 
   cmd :all do |cfg|
-    cfg.each_line.to_a[2..-2].join
+    raise RuntimeError, "Authorization failed" if cfg.match /(Authorization failed)/
+    cfg.gsub! /^\r/,''
+    cfg.each_line.to_a[1..-2].join
   end
 
   cmd :secret do |cfg| 
@@ -23,8 +25,25 @@ class IOSXR < Oxidized::Model
     comment cfg
   end
 
+  cmd 'admin show redundancy' do |cfg|
+    cfg.gsub! /^([\S\s,:]+ago)$/, '<time info removed>'
+    comment cfg
+  end
+
+  cmd 'admin show install active' do |cfg|
+    comment cfg
+  end
+
+  cmd 'show controllers np ports all' do |cfg|
+    comment cfg
+  end
+
+  cmd 'admin show running-config' do |cfg|
+    comment cfg
+  end
+
   cmd 'show running-config' do |cfg|
-    cfg = cfg.each_line.to_a[3..-1].join
+    cfg = cfg.each_line.to_a[2..-1].join
     cfg
   end
 
@@ -34,15 +53,9 @@ class IOSXR < Oxidized::Model
   end
 
   cfg :telnet, :ssh do
+    post_login 'terminal exec prompt no-timestamp'
     post_login 'terminal length 0'
     post_login 'terminal width 0'
-    post_login 'terminal exec prompt no-timestamp'
-    if vars :enable
-      post_login do
-        send "enable\n"
-        send vars(:enable) + "\n"
-      end
-    end
     pre_logout 'exit'
   end
 
